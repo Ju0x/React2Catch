@@ -9,9 +9,7 @@ flags:
 
 goos: linux
 
-goarch: 
-  - amd64
-  - arm64
+goarch: amd64
 
 binary: react2catch-{{ .Os }}-{{ .Arch }}
 
