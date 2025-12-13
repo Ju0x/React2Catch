@@ -1,0 +1,76 @@
+package main
+
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"time"
+)
+
+type Catch struct {
+	Timestamp int64             `json:"timestamp"` // Will be set automatically when logging
+	Source    string            `json:"src"`
+	Host      string            `json:"host"`
+	Path      string            `json:"path"`
+	Method    string            `json:"method"`
+	Headers   map[string]string `json:"headers,omitempty"`
+	Body      string            `json:"body"`
+	Matches   Matches           `json:"matches"`
+}
+
+type Logger struct {
+	mu  sync.Mutex
+	out *os.File
+}
+
+func NewLogger(path string) (*Logger, error) {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Logger{
+		out: f,
+	}, nil
+}
+
+func (l *Logger) LogCatch(catch Catch) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	catch.Timestamp = time.Now().Unix()
+
+	b, err := json.Marshal(catch)
+	if err != nil {
+		log.Printf("failed to marshal log event: %v", err)
+		return
+	}
+
+	b = append(b, '\n')
+
+	if _, err := l.out.Write(b); err != nil {
+		log.Printf("failed to write log event: %v", err)
+	}
+}
+
+func (l *Logger) Close() {
+	l.out.Close()
+}
+
+// Convers the net/http headers to a better format for the JSON logs
+func convertHeaders(h http.Header) map[string]string {
+	out := make(map[string]string)
+
+	for key, values := range h {
+		if len(values) > 0 {
+			out[key] = strings.Join(values, ", ")
+		} else {
+			out[key] = ""
+		}
+	}
+
+	return out
+}
