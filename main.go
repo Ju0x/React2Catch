@@ -30,7 +30,7 @@ func regexCompile(regex string) *regexp.Regexp {
 func init() {
 	flag.StringVar(&addr, "addr", ":8080", "Host value (e.g. :8080, localhost:1337, 0.0.0.0:1234)")
 	flag.StringVar(&trusted, "trusted", "", "Trusted proxies (IPs seperated by comma, e.g. --trusted 127.0.0.1,::1)")
-	flag.StringVar(&output, "output", "catches.jsonl", "Output file (default stdout)")
+	flag.StringVar(&output, "output", "catches.jsonl", "Output file for the logs")
 	flag.Parse()
 
 	if len(trusted) > 0 {
@@ -101,7 +101,6 @@ func main() {
 					Method:  r.Method,
 					Headers: convertHeaders(r.Header),
 					Body:    body,
-					Matches: matches,
 				}
 
 				logger.LogCatch(catch)

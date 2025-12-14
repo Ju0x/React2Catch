@@ -18,7 +18,6 @@ type Catch struct {
 	Method    string            `json:"method"`
 	Headers   map[string]string `json:"headers,omitempty"`
 	Body      string            `json:"body"`
-	Matches   Matches           `json:"matches"`
 }
 
 type Logger struct {
@@ -57,7 +56,10 @@ func (l *Logger) LogCatch(catch Catch) {
 }
 
 func (l *Logger) Close() {
-	l.out.Close()
+	err := l.out.Close()
+	if err != nil {
+		log.Printf("[Error] failed to close log file: %v", err)
+	}
 }
 
 // Convers the net/http headers to a better format for the JSON logs
