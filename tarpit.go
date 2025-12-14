@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -52,6 +53,9 @@ func releaseIP(ip string) {
 }
 
 func tarpitHandler(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	var caughtTime time.Duration
+
 	ip := normalizeIP(RealSource(r))
 
 	w.Header().Set("Content-Type", "text/plain")
@@ -65,7 +69,11 @@ func tarpitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "429 Too Many Requests", http.StatusTooManyRequests)
 		return
 	}
-	defer func(ip string) { <-slots; releaseIP(ip) }(ip)
+	defer func(ip string) {
+		<-slots
+		releaseIP(ip)
+		log.Printf("Caught %s in tarpit for %s", ip, caughtTime)
+	}(ip)
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -86,8 +94,12 @@ func tarpitHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			flusher.Flush()
 
+			// Adding duration manually, so we get a better result of how long the (working) connection was there
+			caughtTime += time.Since(start)
+
 			// Using random delay, just in case
-			time.Sleep(time.Duration(2000+rand.Intn(6000)) * time.Millisecond)
+			time.Sleep(time.Duration(1000+rand.Intn(5000)) * time.Millisecond)
 		}
 	}
+
 }

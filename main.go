@@ -112,13 +112,14 @@ func main() {
 			}
 		}
 
-		if tarpit {
-			tarpitHandler(w, r)
-			return
-		}
-
 		if catched {
 			// a little trolling
+
+			if tarpit {
+				tarpitHandler(w, r)
+				return
+			}
+
 			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -126,14 +127,15 @@ func main() {
 
 	})
 
-	log.Printf("React2Catch - Running on %s\n", addr)
+	colored(blue, "=== React2Catch - Running on %s ===\n", addr)
 	trusted = strings.Join(trustedProxies, ", ")
 	if len(trusted) == 0 {
-		log.Print("You do not trust any proxies. If React2Catch is running behind a proxy, it could lead to problems. Use --trusted to define trusted IPs.")
+		colored(red, "(!) You do not trust any proxies. If React2Catch is running behind a proxy (such as NGINX), it could lead to problems. Use --trusted to define trusted IPs.\n")
 	} else {
-		log.Printf("(!) Trusted proxies: %s", trusted)
+		colored(yellow, "Trusted proxies: %s", trusted)
 	}
-	log.Printf("Storing logs to %s\n", output)
-	log.Printf("Tarpit activated: %v\n", tarpit)
+	colored(reset, "Storing logs to %s\n", output)
+	colored(reset, "Tarpit activated: %v\n", tarpit)
+
 	log.Fatal(http.ListenAndServe(addr, handler))
 }

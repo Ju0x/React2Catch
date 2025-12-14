@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -75,4 +76,18 @@ func convertHeaders(h http.Header) map[string]string {
 	}
 
 	return out
+}
+
+// only for stdout
+const (
+	red    = "\033[31m"
+	green  = "\033[32m"
+	yellow = "\033[33m"
+	blue   = "\033[34m"
+	reset  = "\033[0m"
+)
+
+func colored(color, s string, v ...any) {
+	s = fmt.Sprintf("%s%s%s", color, s, reset)
+	fmt.Printf(s, v...)
 }
