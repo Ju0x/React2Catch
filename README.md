@@ -4,7 +4,7 @@ A simple honeypot which passively logs any attempt to exploit React2Shell.
 
 ## Setup
 
-> **[You can download the latest release.](https://github.com/Ju0x/React2Catch/releases)**
+> **[You can download the latest release.](https://github.com/Ju0x/React2Catch/releases/latest)**
 
 Adding execute permissions:
 ```
