@@ -10,8 +10,10 @@ import (
 )
 
 var (
-	addr            string
-	trusted         string
+	addr    string
+	trusted string
+	output  string
+
 	headerIndicator *regexp.Regexp
 	bodyIndicator   *regexp.Regexp
 )
@@ -28,7 +30,7 @@ func regexCompile(regex string) *regexp.Regexp {
 func init() {
 	flag.StringVar(&addr, "addr", ":8080", "Host value (e.g. :8080, localhost:1337, 0.0.0.0:1234)")
 	flag.StringVar(&trusted, "trusted", "", "Trusted proxies (IPs seperated by comma, e.g. --trusted 127.0.0.1,::1)")
-
+	flag.StringVar(&output, "output", "catches.jsonl", "Output file (default stdout)")
 	flag.Parse()
 
 	if len(trusted) > 0 {
@@ -60,7 +62,12 @@ func checkIndicators(w http.ResponseWriter, r *http.Request) (Matches, string, e
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return matches, "", err
 	}
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("[Error] checkIndicators: failed to close body - %v", err)
+		}
+	}(r.Body)
 
 	if bodyIndicator.Match(body) {
 		matches.Body = true
@@ -70,7 +77,7 @@ func checkIndicators(w http.ResponseWriter, r *http.Request) (Matches, string, e
 }
 
 func main() {
-	logger, err := NewLogger("catches.jsonl")
+	logger, err := NewLogger(output)
 
 	if err != nil {
 		log.Fatalf("failed to initialize logger: %v", err)
@@ -102,7 +109,10 @@ func main() {
 		}
 
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("500 Internal Server Error"))
+		_, err := w.Write([]byte("500 Internal Server Error"))
+		if err != nil {
+			log.Printf("[Error] failed to write response: %v", err)
+		}
 	})
 
 	log.Printf("React2Catch - Running on %s\n", addr)
@@ -112,6 +122,7 @@ func main() {
 	} else {
 		log.Printf("(!) Trusted proxies: %s", trusted)
 	}
+	log.Printf("Storing logs to %s\n", output)
 
 	log.Fatal(http.ListenAndServe(addr, handler))
 }
