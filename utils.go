@@ -41,3 +41,21 @@ func RealSource(r *http.Request) string {
 	}
 	return host
 }
+
+/*
+Used for IPv6 addresses in ratelimitting, to prevent only blacklisting /128 ranges,
+since most networks have at least a /64 address.
+*/
+func normalizeIP(host string) string {
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return ""
+	}
+
+	if ip.To4() != nil {
+		return ip.String()
+	}
+
+	masked := ip.Mask(net.CIDRMask(64, 128))
+	return masked.String() + "/64"
+}

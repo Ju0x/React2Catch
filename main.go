@@ -13,6 +13,7 @@ var (
 	addr    string
 	trusted string
 	output  string
+	tarpit  bool
 
 	headerIndicator *regexp.Regexp
 	bodyIndicator   *regexp.Regexp
@@ -31,6 +32,7 @@ func init() {
 	flag.StringVar(&addr, "addr", ":8080", "Host value (e.g. :8080, localhost:1337, 0.0.0.0:1234)")
 	flag.StringVar(&trusted, "trusted", "", "Trusted proxies (IPs seperated by comma, e.g. --trusted 127.0.0.1,::1)")
 	flag.StringVar(&output, "output", "catches.jsonl", "Output file for the logs")
+	flag.BoolVar(&tarpit, "tarpit", false, "Whether the tarpit should be activated")
 	flag.Parse()
 
 	if len(trusted) > 0 {
@@ -85,6 +87,8 @@ func main() {
 	defer logger.Close()
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		catched := false
+
 		if r.Method == http.MethodPost {
 			matches, body, err := checkIndicators(w, r)
 
@@ -104,14 +108,22 @@ func main() {
 				}
 
 				logger.LogCatch(catch)
+				catched = true
 			}
 		}
 
-		w.WriteHeader(http.StatusInternalServerError)
-		_, err := w.Write([]byte("500 Internal Server Error"))
-		if err != nil {
-			log.Printf("[Error] failed to write response: %v", err)
+		if tarpit {
+			tarpitHandler(w, r)
+			return
 		}
+
+		if catched {
+			// a little trolling
+			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		http.Error(w, "404 Not Found", http.StatusNotFound)
+
 	})
 
 	log.Printf("React2Catch - Running on %s\n", addr)
@@ -122,6 +134,6 @@ func main() {
 		log.Printf("(!) Trusted proxies: %s", trusted)
 	}
 	log.Printf("Storing logs to %s\n", output)
-
+	log.Printf("Tarpit activated: %v\n", tarpit)
 	log.Fatal(http.ListenAndServe(addr, handler))
 }
