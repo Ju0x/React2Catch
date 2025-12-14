@@ -25,7 +25,7 @@ func RealSource(r *http.Request) string {
 
 	if !slices.Contains(trustedProxies, host) {
 		// Address is not trusted; use normal remote address
-		return remoteAddr
+		return host
 	}
 
 	xForwarded := r.Header.Get("X-Forwarded-For")
@@ -39,5 +39,5 @@ func RealSource(r *http.Request) string {
 		parts := strings.Split(xRealIP, ",")
 		return strings.TrimSpace(parts[0])
 	}
-	return remoteAddr
+	return host
 }
