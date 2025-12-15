@@ -18,7 +18,7 @@ Running React2Catch:
 
 You might also want to use the command line options, depending on your setup:
 ```
-./react2catch-linux-amd64 --addr :1337 --trusted 127.0.0.1,::1 --output ./logs/react2catch.jsonl
+./react2catch-linux-amd64 --addr :1337 --trusted 127.0.0.1,::1 --tarpit --output ./logs/react2catch.jsonl
 ```
 
 ### --addr
@@ -28,6 +28,9 @@ Adds trusted IPs which will be accepted for `X-Forwarded-For` or `X-Real-IP` hea
 
 ### --output
 Sets the output file for the log. (Default: catches.jsonl)
+
+### --tarpit
+Enables the tarpit. Every requester that sends the exploit will get random data every few seconds, so the connection keeps open for hosts that aren't properly checking the response.
 
 ## Build
 
