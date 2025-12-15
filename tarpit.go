@@ -52,6 +52,19 @@ func releaseIP(ip string) {
 	}
 }
 
+func randChar() byte {
+	return byte(65 + rand.Intn(57))
+}
+
+func randSequence(min, max int) []byte {
+	n := rand.Intn(max) + min
+	seq := []byte{}
+	for range n {
+		seq = append(seq, randChar())
+	}
+	return seq
+}
+
 func tarpitHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	var caughtTime time.Duration
@@ -88,7 +101,7 @@ func tarpitHandler(w http.ResponseWriter, r *http.Request) {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := w.Write([]byte("\n"))
+			_, err := w.Write(randSequence(1, 16))
 			if err != nil {
 				return
 			}
